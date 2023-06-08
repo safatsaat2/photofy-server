@@ -1,5 +1,6 @@
 const express = require('express')
 const cors = require('cors')
+const jwt = require('jsonwebtoken')
 require('dotenv').config()
 const app = express();
 const port = process.env.PORT || 5000;
@@ -9,6 +10,15 @@ app.use(cors())
 app.use(express.json());
 
 
+
+// JWT Genarator
+
+app.post('/jwt', (req, res) => {
+  const user = req.body;
+  const token = jwt.sign(user, process.env.SECRET_TOKEN, { expiresIn: '1h' })
+
+  res.send({ token })
+})
 
 
 
@@ -33,14 +43,14 @@ async function run() {
 
 
     app.post('/users', async (req, res) => {
-        const user = req.body;
-        const query = { email: user.email }
-        const existedUser = await usersCollection.findOne(query);
-        if (existedUser) {
-            return res.send({ message: 'user already exists' })
-        }
-        const result = await usersCollection.insertOne(user);
-        res.send(result)
+      const user = req.body;
+      const query = { email: user.email }
+      const existedUser = await usersCollection.findOne(query);
+      if (existedUser) {
+        return res.send({ message: 'user already exists' })
+      }
+      const result = await usersCollection.insertOne(user);
+      res.send(result)
     })
 
 
@@ -61,12 +71,11 @@ run().catch(console.dir);
 
 
 app.get('/', (req, res) => {
-    res.send('Photofy is running')
+  res.send('Photofy is running')
 })
 
 app.listen(port, () => {
-    console.log(`Photofy is running on ${port}  `)
+  console.log(`Photofy is running on ${port}  `)
 })
 
 
-        
