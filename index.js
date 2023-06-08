@@ -37,9 +37,9 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
 
     const usersCollection = client.db('photofyDB2').collection('usersCollection')
+    const classesCollection = client.db('photofyDB2').collection('classesCollection')
 
 
     app.post('/users', async (req, res) => {
@@ -51,6 +51,19 @@ async function run() {
       }
       const result = await usersCollection.insertOne(user);
       res.send(result)
+    })
+    // class collection
+
+    app.get('/classes', async (req, res) => {
+      const query = {};
+      const options = {
+        // sort matched documents in descending order by rating
+        sort: { "student": -1 },
+      }
+
+      const result = await classesCollection.find(query, options).toArray();
+      res.send(result);
+
     })
 
 
