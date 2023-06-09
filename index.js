@@ -52,6 +52,16 @@ async function run() {
       const result = await usersCollection.insertOne(user);
       res.send(result)
     })
+
+    // Instructor Collection
+
+    app.get('/instructor', async(req, res)=>{
+      const query = {role : 'instructor'}
+      const result = await  usersCollection.find(query).toArray()
+      res.send(result)
+    })
+
+
     // class collection
 
     app.get('/classes', async (req, res) => {
