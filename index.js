@@ -20,6 +20,23 @@ app.post('/jwt', (req, res) => {
   res.send({ token })
 })
 
+// JWT varyfying
+  const verifyJWT = (req, res, next)=>{
+    const authorization = req.headers.authorization;
+    if(!authorization){
+      return res.status(401).send({error: true, message: 'unauthorized access'})
+    }
+    const token = authorization.split(' ')[1];
+
+    jwt.verify(token, process.env.SECRET_TOKEN, (err, decoded) => {
+      if(err){
+        return res.status(401).send({error: true, message: 'unauthorized access'})
+      }
+      req.decoded = decoded;
+      next();
+    })
+  }
+
 
 
 const { MongoClient, ServerApiVersion } = require('mongodb');
@@ -40,6 +57,7 @@ async function run() {
 
     const usersCollection = client.db('photofyDB2').collection('usersCollection')
     const classesCollection = client.db('photofyDB2').collection('classesCollection')
+    const selectedClasses = client.db('photofyDB2').collection('selectedClasses')
 
 
     app.post('/users', async (req, res) => {
@@ -61,6 +79,14 @@ async function run() {
       res.send(result)
     })
 
+
+    // selectedClasses collection
+
+    app.post('/selected-classes', verifyJWT,  async (req, res) =>{
+      const info = req.body;
+      const result = await selectedClasses.insertOne(info)
+      res.send(result)
+    })
 
     // class collection
 
