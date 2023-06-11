@@ -28,13 +28,13 @@ const verifyJWT = (req, res, next) => {
   }
   // bearer token
   const token = authorization.split(' ')[1];
-  console.log("token",  token)
+  console.log("token", token)
   jwt.verify(token, process.env.SECRET_TOKEN, (err, decoded) => {
     console.log("err", err)
     if (err) {
       return res.status(403).send({ error: true, message: 'unauthorized access' })
     }
-    
+
     req.decoded = decoded;
     console.log("req.decoded", decoded);
     next();
@@ -78,28 +78,46 @@ async function run() {
       next();
     }
 
-// Admin
+    // Admin
 
 
-app.get('/user/admin/:email', verifyJWT, async(req, res)=>{
+    app.get('/users/admin/:email', verifyJWT,  async (req, res) => {
 
-  const email = req.params.email;
+      const email = req.params.email;
 
-  if(email !== req.decoded.email){
-    res.send({admin: false})
-  }
-  const query ={email: email};
-  const user = await usersCollection.findOne(query);
-  const result = { admin: user?.role === 'admin' }
-  res.send(result)
+      if (req.decoded.email !== email) {
+       return res.send({ admin: false })
+      }
+      const query = { email: email };
+      const user = await usersCollection.findOne(query);
+      console.log(user)
+      const result = { admin: user?.role === 'admin' }
+      res.send(result)
 
-})
+    })
+
+    //  student
+
+    app.get('/users/student/:email', verifyJWT,  async (req, res) => {
+
+      const email = req.params.email;
+
+      if (req.decoded.email !== email) {
+        return res.send({ admin: false })
+      }
+      const query = { email: email };
+      const user = await usersCollection.findOne(query);
+      console.log(user)
+      const result = { student: user?.role === 'student' }
+      res.send(result)
+
+    })
 
 
 
-//  Users collection
+    //  Users collection
 
-    app.get('/users', verifyJWT, verifyAdmin, async(req, res)=>{
+    app.get('/users', verifyJWT, verifyAdmin, async (req, res) => {
       const result = await usersCollection.find().toArray();
       res.send(result)
     })
@@ -126,17 +144,17 @@ app.get('/user/admin/:email', verifyJWT, async(req, res)=>{
 
     // selectedClasses collection
 
-    app.delete('/selected-classes/:id', verifyJWT, async(req, res)=>{
+    app.delete('/selected-classes/:id', verifyJWT, async (req, res) => {
       console.log(req.decoded.email)
       const id = req.params.id;
-      const query = {_id: new ObjectId(id)};
+      const query = { _id: new ObjectId(id) };
       const result = await selectedClasses.deleteOne(query);
       res.send(result)
     })
 
-    app.get('/selected-classes/:email', async(req, res)=>{
-      const {email} = req.params;
-      const query = {email}
+    app.get('/selected-classes/:email', async (req, res) => {
+      const { email } = req.params;
+      const query = { email }
       const result = await selectedClasses.find(query).toArray()
       res.send(result)
     })
@@ -149,7 +167,7 @@ app.get('/user/admin/:email', verifyJWT, async(req, res)=>{
 
     // class collection
 
-    app.get('/classes',  async (req, res) => {
+    app.get('/classes', async (req, res) => {
       const query = {};
       const options = {
         // sort matched documents in descending order by rating
