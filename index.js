@@ -77,16 +77,25 @@ async function run() {
       }
       next();
     }
+    const verifyInstructor = async (req, res, next) => {
+      const email = req.decoded.email;
+      const query = { email: email }
+      const user = await usersCollection.findOne(query);
+      if (user?.role !== 'instructor') {
+        return res.status(403).send({ error: true, message: 'forbidden message' });
+      }
+      next();
+    }
 
     // Admin
 
 
-    app.get('/users/admin/:email', verifyJWT,  async (req, res) => {
+    app.get('/users/admin/:email', verifyJWT, async (req, res) => {
 
       const email = req.params.email;
 
       if (req.decoded.email !== email) {
-       return res.send({ admin: false })
+        return res.send({ admin: false })
       }
       const query = { email: email };
       const user = await usersCollection.findOne(query);
@@ -98,7 +107,25 @@ async function run() {
 
     //  student
 
-    app.get('/users/student/:email', verifyJWT,  async (req, res) => {
+    app.get('/users/student/:email', verifyJWT, async (req, response) => {
+
+      const email = req.params.email;
+
+      if (req.decoded.email !== email) {
+        return response.send({ admin: false })
+      }
+      const query = { email: email };
+      const user = await usersCollection.findOne(query);
+      console.log(user)
+      const result = { student: user?.role === 'student' }
+      response.send(result)
+
+    })
+
+    // instructor 
+
+
+    app.get('/users/instructor/:email', verifyJWT, async (req, res) => {
 
       const email = req.params.email;
 
@@ -108,7 +135,7 @@ async function run() {
       const query = { email: email };
       const user = await usersCollection.findOne(query);
       console.log(user)
-      const result = { student: user?.role === 'student' }
+      const result = { instructor: user?.role === 'instructor', }
       res.send(result)
 
     })
@@ -131,6 +158,29 @@ async function run() {
       }
       const result = await usersCollection.insertOne(user);
       res.send(result)
+    })
+    app.patch('/users/admin/:id', verifyJWT, verifyAdmin, async(req, response) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          role: 'admin'
+        },
+      };
+      const result = await usersCollection.updateOne(filter, updateDoc);
+      response.send(result);
+    })
+
+    app.patch('/users/instructor/:id', verifyJWT, verifyAdmin, async(req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          role: 'instructor'
+        },
+      };
+      const result = await usersCollection.updateOne(filter, updateDoc);
+      res.send(result);
     })
 
     // Instructor Collection
