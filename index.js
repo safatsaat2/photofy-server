@@ -64,6 +64,7 @@ async function run() {
     const usersCollection = client.db('photofyDB2').collection('usersCollection')
     const classesCollection = client.db('photofyDB2').collection('classesCollection')
     const selectedClasses = client.db('photofyDB2').collection('selectedClasses')
+    const pendingClasses = client.db('photofyDB2').collection('pendingClasses')
 
 
     // Varifying Admin 
@@ -214,6 +215,23 @@ async function run() {
       const result = await selectedClasses.insertOne(info)
       res.send(result)
     })
+
+    // pending classes
+
+    app.post('/pending-classes', verifyJWT, verifyInstructor,  async (req, res)=>{
+      const info = req.body;
+      const result = await pendingClasses.insertOne(info);
+      res.send(result)
+    })
+
+    app.get('/pending-classes/:email', verifyJWT, verifyInstructor, async (req, res) => {
+      const { email } = req.params;
+      const query = { email }
+      const result = await pendingClasses.find(query).toArray()
+      res.send(result)
+    })
+
+
 
     // class collection
 
