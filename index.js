@@ -244,6 +244,7 @@ async function run() {
         },
       };
     const result = pendingClasses.updateOne(filter, updateDoc)
+    res.send(result)
       
     })
 
@@ -270,6 +271,24 @@ async function run() {
       res.send(result)
     })
 
+
+    // feedback
+
+
+    app.patch('/feedback/:id', verifyJWT, verifyAdmin, async(req, res) =>{
+      const id = req.params.id;
+      const feed = req.body;
+      console.log(feed)
+      const find = {_id: new ObjectId(id)};
+      const updateDoc ={
+        $set: {
+          status: "denied",
+          feed: feed.feedback
+        }
+      }
+      const result = await pendingClasses.updateOne(find, updateDoc)
+      res.send(result)
+    })
 
 
     // class collection
