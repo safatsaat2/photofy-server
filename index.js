@@ -225,16 +225,36 @@ async function run() {
       res.send(result)
     })
 
+    app.patch('/pending-classes/edit/:id', verifyJWT, verifyInstructor, async (req, res) => {
+      const info = req.body;
+      console.log(info)
+      const id = req.params.id;
+      const filter = {_id: new ObjectId(id)}
+      const updateDoc = {
+        $set: {
+          status: info.status,
+          name: info.name,
+          image: info.image,
+          price: info.price,
+          seats: info.seats,
+          instructorName: info.instructorName,
+          email: info.email,
+          student: info.student
+
+        },
+      };
+    const result = pendingClasses.updateOne(filter, updateDoc)
+      
+    })
+
     app.get('/pending-classes/pending/:email', verifyJWT, verifyAdmin, async (req, res) => {
       const { email } = req.params;
-      // const query = { email }
       const result = await pendingClasses.find().toArray()
       res.send(result)
     })
     app.get('/pending-classes/:email', verifyJWT, verifyInstructor, async (req, res) => {
       const { email } = req.params;
       const query = { email }
-      // const filter = { status: "pending" }
       const result = await pendingClasses.find(query).toArray()
       res.send(result)
     })
@@ -266,6 +286,13 @@ async function run() {
 
     })
 
+    app.get('/classes/:id', verifyJWT, verifyInstructor, async(req, res)=>{
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)}
+      const result = await pendingClasses.findOne(query)
+      res.send(result)
+    })
+
     app.post('/classes/:id', verifyJWT, verifyAdmin, async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
@@ -289,17 +316,16 @@ async function run() {
 
     app.post('/create-payment-intent', verifyJWT, async (req, res) => {
       const { price } = req.body;
-      const amount = price * 100;
-      const paymentIntent = await stripe.paymenttIntents.create({
+      const amount = parseInt(price * 100);
+      const paymentIntent = await stripe.paymentIntents.create({
         amount: amount,
         currency: 'usd',
-        payment_menthod_types: ['card']
+        payment_method_types: ['card']
       });
-      res.send(
-        {
-          clientSecret: paymentIntent.client_secret
-        }
-      )
+
+      res.send({
+        clientSecret: paymentIntent.client_secret
+      })
     })
 
 
