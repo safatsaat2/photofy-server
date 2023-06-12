@@ -2,6 +2,7 @@ const express = require('express')
 const cors = require('cors')
 const jwt = require('jsonwebtoken')
 require('dotenv').config()
+const stripe = require('stripe')(process.env.PAYMENT_SECRET_KEY)
 const app = express();
 const port = process.env.PORT || 5000;
 
@@ -160,7 +161,7 @@ async function run() {
       const result = await usersCollection.insertOne(user);
       res.send(result)
     })
-    app.patch('/users/admin/:id', verifyJWT, verifyAdmin, async(req, response) => {
+    app.patch('/users/admin/:id', verifyJWT, verifyAdmin, async (req, response) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
       const updateDoc = {
@@ -172,7 +173,7 @@ async function run() {
       response.send(result);
     })
 
-    app.patch('/users/instructor/:id', verifyJWT, verifyAdmin, async(req, res) => {
+    app.patch('/users/instructor/:id', verifyJWT, verifyAdmin, async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
       const updateDoc = {
@@ -218,7 +219,7 @@ async function run() {
 
     // pending classes
 
-    app.post('/pending-classes', verifyJWT, verifyInstructor,  async (req, res)=>{
+    app.post('/pending-classes', verifyJWT, verifyInstructor, async (req, res) => {
       const info = req.body;
       const result = await pendingClasses.insertOne(info);
       res.send(result)
@@ -237,15 +238,16 @@ async function run() {
       const result = await pendingClasses.find(query).toArray()
       res.send(result)
     })
-    app.patch('/pending-classes/:id', verifyJWT, verifyAdmin, async(req, res)=>{
+    app.patch('/pending-classes/:id', verifyJWT, verifyAdmin, async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
       const updateDoc = {
         $set: {
           status: 'Approved'
-        },};
-       const result = await pendingClasses.updateOne(filter, updateDoc);
-       res.send(result) 
+        },
+      };
+      const result = await pendingClasses.updateOne(filter, updateDoc);
+      res.send(result)
     })
 
 
@@ -264,26 +266,41 @@ async function run() {
 
     })
 
-    app.post('/classes/:id', verifyJWT, verifyAdmin, async(req, res) =>{
+    app.post('/classes/:id', verifyJWT, verifyAdmin, async (req, res) => {
       const id = req.params.id;
-      const query = {_id: new ObjectId(id)};
-      const projection ={className:1,classImage:1, name:1, status:1, seats:1, student:1, email:1, _id:-1}
-      const  clas = await pendingClasses.findOne(query, projection)
-      const name =  clas.className 
-      const image =  clas.classImage 
-      const instructorName =  clas.name 
-      const email =  clas.className 
-      const seats =  clas.className 
-      const price =  clas.className 
-      const status =  clas.className 
-      const student =  clas.className 
-      const info = {name, image, instructorName, email, seats, price, status, student}
+      const query = { _id: new ObjectId(id) };
+      const projection = { className: 1, classImage: 1, name: 1, status: 1, seats: 1, student: 1, email: 1, _id: -1 }
+      const clas = await pendingClasses.findOne(query, projection)
+      const name = clas.className
+      const image = clas.classImage
+      const instructorName = clas.name
+      const email = clas.className
+      const seats = clas.className
+      const price = clas.className
+      const status = clas.className
+      const student = clas.className
+      const info = { name, image, instructorName, email, seats, price, status, student }
       console.log(clas)
       const result = await classesCollection.insertOne(info)
       res.send(result)
-    } )
+    })
 
-   
+    //  create payment intent
+
+    app.post('/create-payment-intent', verifyJWT, async (req, res) => {
+      const { price } = req.body;
+      const amount = price * 100;
+      const paymentIntent = await stripe.paymenttIntents.create({
+        amount: amount,
+        currency: 'usd',
+        payment_menthod_types: ['card']
+      });
+      res.send(
+        {
+          clientSecret: paymentIntent.client_secret
+        }
+      )
+    })
 
 
 
